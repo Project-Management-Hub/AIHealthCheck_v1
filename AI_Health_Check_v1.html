@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AI Health Check — One7 AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1B3472;
+    --teal: #2AB5A0;
+    --purple: #6B3FA0;
+    --gold: #F5A623;
+    --ink: #1a1a1a;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --bg: #f8fafc;
+    --card: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: 'Sarabun', sans-serif; color: var(--ink); background: var(--bg); line-height: 1.6; font-size: 15px; }
+  body { padding: 20px 12px 60px; }
+  .wrap { max-width: 820px; margin: 0 auto; }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, var(--navy) 0%, #2a4a8f 100%);
+    color: white;
+    padding: 28px 24px;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 4px 20px rgba(27,52,114,0.15);
+  }
+  header h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 8px; }
+  header .subtitle { font-size: 0.95rem; opacity: 0.9; font-weight: 300; }
+  header .brand-strip { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  header .brand-strip span { font-size: 0.75rem; letter-spacing: 2px; font-weight: 600; opacity: 0.85; }
+  header .brand-strip .dot { width: 8px; height: 8px; background: var(--teal); border-radius: 50%; }
+
+  /* Info bar */
+  .info-bar {
+    background: #fff9e6;
+    border-left: 4px solid var(--gold);
+    padding: 14px 18px;
+    font-size: 0.9rem;
+    color: #7a5a00;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+  .info-bar strong { color: var(--navy); }
+
+  /* Sections */
+  .card {
+    background: var(--card);
+    padding: 28px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card:last-of-type { border-radius: 0 0 16px 16px; }
+  .section-label {
+    display: inline-block;
+    background: var(--teal);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .card h2 { font-size: 1.25rem; color: var(--navy); font-weight: 700; margin-bottom: 16px; }
+  .card h2 small { font-weight: 400; color: var(--muted); font-size: 0.85rem; display: block; margin-top: 4px; }
+
+  /* Question blocks */
+  .q { margin-bottom: 22px; }
+  .q-title { font-weight: 600; color: var(--ink); margin-bottom: 10px; font-size: 0.98rem; }
+  .q-title .required { color: #c00; margin-left: 4px; }
+  .q-hint { font-size: 0.82rem; color: var(--muted); margin-top: -4px; margin-bottom: 10px; font-style: italic; }
+
+  /* Inputs */
+  input[type="text"], textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    background: #fafafa;
+    transition: all 0.15s;
+  }
+  input[type="text"]:focus, textarea:focus {
+    outline: none;
+    border-color: var(--teal);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(42,181,160,0.12);
+  }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* Checkbox / radio */
+  .opt {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    background: #fafafa;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .opt:hover { border-color: var(--teal); background: white; }
+  .opt input { margin-top: 4px; cursor: pointer; accent-color: var(--teal); }
+  .opt.checked { background: #e8f6f3; border-color: var(--teal); }
+  .opt-text { flex: 1; font-size: 0.93rem; }
+  .opt-other-input { margin-top: 8px; }
+
+  /* Ranked list container */
+  .rank-wrap { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 720px) { .rank-wrap { grid-template-columns: 1fr 1fr; } }
+  .rank-col h4 {
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .rank-col.selected h4 { color: var(--teal); }
+
+  /* Available options (like checkbox list) */
+  .avail-list .opt { margin-bottom: 6px; }
+
+  /* Selected + draggable items */
+  .selected-list { min-height: 60px; padding: 4px; border: 2px dashed #cbd5e0; border-radius: 10px; background: #f0f9f7; }
+  .selected-list.empty::after {
+    content: '⬅ ติ๊กจากซ้ายเพื่อเลือก แล้วลากเพื่อจัดอันดับ';
+    display: block;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    padding: 16px;
+    font-style: italic;
+  }
+  .selected-list:not(.empty)::after { display: none; }
+
+  .drag-item {
+    background: white;
+    border: 1.5px solid var(--teal);
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: grab;
+    touch-action: none;
+    transition: box-shadow 0.15s;
+    font-size: 0.92rem;
+  }
+  .drag-item:active { cursor: grabbing; }
+  .drag-item.dragging { opacity: 0.4; transform: scale(0.98); }
+  .drag-item.drop-target { border-color: var(--gold); border-style: dashed; }
+  .rank-badge {
+    background: var(--navy);
+    color: white;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .drag-handle { color: #aaa; font-size: 1.1rem; padding: 0 2px; cursor: grab; }
+  .remove-btn {
+    background: transparent;
+    border: none;
+    color: #c00;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0 4px;
+    opacity: 0.6;
+  }
+  .remove-btn:hover { opacity: 1; }
+
+  /* D3 accordion */
+  .d3-group { border: 1.5px solid var(--border); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+  .d3-header {
+    background: linear-gradient(90deg, #f5f9fa 0%, #eaf4f6 100%);
+    padding: 14px 18px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--navy);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  .d3-header:hover { background: linear-gradient(90deg, #eaf4f6 0%, #d5edf0 100%); }
+  .d3-header .chevron { transition: transform 0.2s; }
+  .d3-group.open .d3-header .chevron { transform: rotate(180deg); }
+  .d3-body { padding: 16px 18px; display: none; background: white; }
+  .d3-group.open .d3-body { display: block; }
+  .d3-count { font-size: 0.8rem; color: var(--teal); font-weight: 500; margin-left: auto; margin-right: 12px; }
+
+  /* D2 special */
+  .d2-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .d2-box { background: #fafafa; border: 1.5px solid var(--border); border-radius: 10px; padding: 14px; }
+  .d2-box .rank-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: var(--navy);
+    color: white;
+    border-radius: 50%;
+    font-weight: 700;
+    margin-right: 10px;
+    font-size: 0.9rem;
+  }
+  .d2-box.alt .rank-num { background: var(--purple); }
+  .d2-label { font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; }
+  .d2-sub { font-size: 0.78rem; color: var(--muted); font-weight: 400; margin-left: 40px; margin-top: -4px; margin-bottom: 8px; font-style: italic; }
+
+  /* Submit area */
+  .submit-area { text-align: center; padding: 32px 24px; background: #f1f5f9; border-radius: 0 0 16px 16px; }
+  .btn-submit {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--teal) 100%);
+    color: white;
+    border: none;
+    padding: 14px 48px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    border-radius: 50px;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 4px 16px rgba(27,52,114,0.25);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(27,52,114,0.35); }
+  .btn-submit:active { transform: translateY(0); }
+
+  /* Result panel */
+  #result { display: none; margin-top: 24px; background: white; padding: 20px; border-radius: 12px; border: 2px solid var(--teal); }
+  #result h3 { color: var(--navy); margin-bottom: 10px; }
+  #result textarea { font-family: 'Courier New', monospace; font-size: 0.78rem; background: #fafafa; }
+  .copy-btn { margin-top: 10px; background: var(--teal); color: white; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: 500; }
+
+  /* Footer */
+  footer { text-align: center; margin-top: 32px; padding: 20px; color: var(--muted); font-size: 0.85rem; }
+  footer strong { color: var(--navy); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand-strip"><span class="dot"></span><span>ONE7 AI</span></div>
+    <h1>🤖 AI Health Check</h1>
+    <div class="subtitle">แบบสอบถามตรวจสุขภาพด้าน AI ขององค์กร (v2.0 · Reference Template)</div>
+  </header>
+
+  <div class="info-bar">
+    <span><strong>🎯 วัตถุประสงค์:</strong> ประเมินความพร้อมและทิศทาง AI ขององค์กร เพื่อออกแบบ Solution ที่ตรงความต้องการก่อนเข้าพบ</span>
+    <span><strong>⏱ เวลา:</strong> 5-7 นาที</span>
+    <span><strong>🔒 ความเป็นส่วนตัว:</strong> ข้อมูลเก็บเป็นความลับ</span>
+  </div>
+
+  <form id="survey">
+    <!-- ========== ส่วน A ========== -->
+    <div class="card">
+      <span class="section-label">ส่วน A</span>
+      <h2>ข้อมูลผู้ตอบ <small>ไม่บังคับกรอก ตามสะดวก</small></h2>
+
+      <div class="q">
+        <div class="q-title">A1. ชื่อ-นามสกุล</div>
+        <input type="text" name="A1" placeholder="ชื่อ-นามสกุล (ถ้าสะดวก)">
+      </div>
+      <div class="q">
+        <div class="q-title">A2. ตำแหน่ง</div>
+        <input type="text" name="A2" placeholder="ตำแหน่ง (ถ้าสะดวก)">
+      </div>
+      <div class="q">
+        <div class="q-title">A3. บริษัท/องค์กร</div>
+        <input type="text" name="A3" placeholder="ชื่อบริษัท (AI จะ pre-fill อัตโนมัติในเวอร์ชันเฉพาะลูกค้า)">
+      </div>
+
+      <div class="q">
+        <div class="q-title">A4. บทบาทของท่านในองค์กร <span class="q-hint">(เลือกได้หลายข้อ)</span></div>
+        <div data-multi="A4">
+          <label class="opt"><input type="checkbox" value="เจ้าของกิจการ/ผู้ก่อตั้ง"><span class="opt-text">เจ้าของกิจการ / ผู้ก่อตั้ง</span></label>
+          <label class="opt"><input type="checkbox" value="ผู้บริหารระดับสูง"><span class="opt-text">ผู้บริหารระดับสูง (CEO, MD, รองกรรมการผู้จัดการ)</span></label>
+          <label class="opt"><input type="checkbox" value="ผู้บริหารสายงาน"><span class="opt-text">ผู้บริหารสายงาน (Head of / Director / VP)</span></label>
+          <label class="opt"><input type="checkbox" value="ผู้จัดการฝ่าย"><span class="opt-text">ผู้จัดการฝ่าย / Senior Manager</span></label>
+          <label class="opt opt-other"><input type="checkbox" value="__other__"><span class="opt-text">อื่นๆ (โปรดระบุ)</span></label>
+          <input type="text" class="opt-other-input" placeholder="ระบุบทบาท..." style="display:none">
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== ส่วน B ========== -->
+    <div class="card">
+      <span class="section-label">ส่วน B</span>
+      <h2>ความพร้อมด้าน AI ขององค์กร</h2>
+
+      <div class="q">
+        <div class="q-title">B1. ระดับการใช้งาน AI ในองค์กรปัจจุบัน <span class="q-hint">(เลือก 1 ข้อ)</span></div>
+        <div data-single="B1">
+          <label class="opt"><input type="radio" name="B1" value="ไม่เคยใช้ แต่เริ่มสนใจ"><span class="opt-text">ยังไม่เคยใช้ AI ในองค์กร แต่เริ่มสนใจ</span></label>
+          <label class="opt"><input type="radio" name="B1" value="ใช้ส่วนตัวไม่เป็นทางการ"><span class="opt-text">พนักงานบางคนใช้ AI ส่วนตัว (ChatGPT, Claude ฯลฯ) แต่ยังไม่เป็นทางการ</span></label>
+          <label class="opt"><input type="radio" name="B1" value="ใช้บางงานไม่เป็นระบบ"><span class="opt-text">ใช้ AI ในบางงาน / บางแผนก แต่ไม่ได้เป็นระบบ</span></label>
+          <label class="opt"><input type="radio" name="B1" value="ใช้เป็นระบบบางฝ่าย"><span class="opt-text">มีการใช้ AI อย่างเป็นระบบในบางฝ่าย</span></label>
+          <label class="opt"><input type="radio" name="B1" value="ใช้หลักหลายแผนก"><span class="opt-text">ใช้ AI เป็นเครื่องมือหลักในหลายแผนกทั่วทั้งองค์กร</span></label>
+          <label class="opt opt-other"><input type="radio" name="B1" value="__other__"><span class="opt-text">อื่นๆ (เช่น มีโปรเจกต์ AI/หุ่นยนต์เฉพาะทาง)</span></label>
+          <input type="text" class="opt-other-input" placeholder="ระบุเพิ่มเติม..." style="display:none">
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-title">B2. เครื่องมือ AI ที่องค์กรหรือทีมเคยใช้ <span class="q-hint">(เลือกได้หลายข้อ)</span></div>
+        <div data-multi="B2">
+          <label class="opt"><input type="checkbox" value="ChatGPT"><span class="opt-text">ChatGPT (OpenAI)</span></label>
+          <label class="opt"><input type="checkbox" value="Claude"><span class="opt-text">Claude (Anthropic)</span></label>
+          <label class="opt"><input type="checkbox" value="Gemini"><span class="opt-text">Google Gemini</span></label>
+          <label class="opt"><input type="checkbox" value="Copilot"><span class="opt-text">Microsoft Copilot</span></label>
+          <label class="opt"><input type="checkbox" value="Custom"><span class="opt-text">AI เฉพาะทาง / Custom AI ที่พัฒนาเอง</span></label>
+          <label class="opt"><input type="checkbox" value="None"><span class="opt-text">ยังไม่เคยใช้เครื่องมือใดเลย</span></label>
+          <label class="opt opt-other"><input type="checkbox" value="__other__"><span class="opt-text">อื่นๆ (โปรดระบุ)</span></label>
+          <input type="text" class="opt-other-input" placeholder="ระบุเครื่องมือ..." style="display:none">
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== ส่วน C ========== -->
+    <div class="card">
+      <span class="section-label">ส่วน C — หัวใจของการคัดกรอง</span>
+      <h2>ทิศทางและเป้าหมายในการนำ AI มาใช้</h2>
+
+      <!-- C1 Ranked -->
+      <div class="q">
+        <div class="q-title">C1. ด้านที่ท่านสนใจนำ AI มาใช้ <span class="required">*</span></div>
+        <div class="q-hint">ติ๊กเลือกด้านที่สนใจทั้งหมด (ไม่จำกัดจำนวน) แล้วลาก-วางฝั่งขวาเพื่อจัดอันดับความสำคัญ 1 → 2 → 3 →</div>
+        <div class="rank-wrap">
+          <div class="rank-col">
+            <h4>ตัวเลือกทั้งหมด</h4>
+            <div class="avail-list" data-rank-avail="C1">
+              <label class="opt"><input type="checkbox" data-val="การขายและการตลาด"><span class="opt-text">การขายและการตลาด (เพิ่มยอดขาย / ทำการตลาดแม่นยำขึ้น)</span></label>
+              <label class="opt"><input type="checkbox" data-val="การผลิตและปฏิบัติการ"><span class="opt-text">การผลิตและปฏิบัติการ (เพิ่มประสิทธิภาพการผลิต / ลดของเสีย)</span></label>
+              <label class="opt"><input type="checkbox" data-val="การบริการลูกค้า"><span class="opt-text">การบริการลูกค้า (AI Call Center / Chatbot / LINE OA)</span></label>
+              <label class="opt"><input type="checkbox" data-val="บัญชีและการเงิน"><span class="opt-text">บัญชีและการเงิน (ตรวจเอกสาร / วิเคราะห์งบ / ป้องกันการทุจริต)</span></label>
+              <label class="opt"><input type="checkbox" data-val="จัดซื้อและ Supply Chain"><span class="opt-text">จัดซื้อและ Supply Chain (เปรียบเทียบราคา / ประเมิน Supplier)</span></label>
+              <label class="opt"><input type="checkbox" data-val="ทรัพยากรบุคคล"><span class="opt-text">ทรัพยากรบุคคล (คัดกรอง Resume / HR Chatbot / วิเคราะห์ผลงาน)</span></label>
+              <label class="opt"><input type="checkbox" data-val="เอกสารและสื่อสารภายใน"><span class="opt-text">การบริหารเอกสารและสื่อสารภายใน (สรุปประชุม / ค้นหาเอกสาร)</span></label>
+              <label class="opt"><input type="checkbox" data-val="วิเคราะห์ข้อมูล"><span class="opt-text">การวิเคราะห์ข้อมูลเพื่อตัดสินใจ (Dashboard / Insight / Forecast)</span></label>
+              <label class="opt opt-other"><input type="checkbox" data-val="__other__"><span class="opt-text">อื่นๆ (โปรดระบุ)</span></label>
+              <input type="text" class="opt-other-input" placeholder="ระบุด้านที่สนใจ..." style="display:none">
+            </div>
+          </div>
+          <div class="rank-col selected">
+            <h4>ลำดับความสำคัญ (ลาก-วางเพื่อเรียง)</h4>
+            <div class="selected-list empty" data-rank-sel="C1"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- C2 Ranked -->
+      <div class="q">
+        <div class="q-title">C2. เป้าหมายหลักที่ท่านคาดหวังจากการนำ AI มาใช้ <span class="required">*</span></div>
+        <div class="q-hint">ติ๊กแล้วจัดอันดับ 1 → 2 → 3 →</div>
+        <div class="rank-wrap">
+          <div class="rank-col">
+            <h4>ตัวเลือกทั้งหมด</h4>
+            <div class="avail-list" data-rank-avail="C2">
+              <label class="opt"><input type="checkbox" data-val="เพิ่มรายได้"><span class="opt-text">เพิ่มรายได้ / ยอดขาย</span></label>
+              <label class="opt"><input type="checkbox" data-val="ลดต้นทุน"><span class="opt-text">ลดต้นทุนการดำเนินงาน</span></label>
+              <label class="opt"><input type="checkbox" data-val="ลดงานซ้ำ"><span class="opt-text">ลดงานซ้ำๆ ของพนักงาน ให้ทำงานที่ใช้ความคิดมากขึ้น</span></label>
+              <label class="opt"><input type="checkbox" data-val="ทำงานเร็ว"><span class="opt-text">ทำงานเร็วขึ้น ตอบสนองลูกค้าได้ทันที</span></label>
+              <label class="opt"><input type="checkbox" data-val="ลดพึ่งพาคน"><span class="opt-text">ลดการพึ่งพาคน / ลดจำนวนพนักงาน</span></label>
+              <label class="opt"><input type="checkbox" data-val="คุณภาพแม่นยำ"><span class="opt-text">เพิ่มคุณภาพและความแม่นยำในการทำงาน</span></label>
+              <label class="opt"><input type="checkbox" data-val="ลดความเสี่ยง"><span class="opt-text">ลดความเสี่ยง / ป้องกันการทุจริต</span></label>
+              <label class="opt"><input type="checkbox" data-val="ภาพลักษณ์แบรนด์"><span class="opt-text">ยกระดับภาพลักษณ์ของแบรนด์ให้ทันสมัย</span></label>
+              <label class="opt opt-other"><input type="checkbox" data-val="__other__"><span class="opt-text">อื่นๆ (โปรดระบุ)</span></label>
+              <input type="text" class="opt-other-input" placeholder="ระบุเป้าหมาย..." style="display:none">
+            </div>
+          </div>
+          <div class="rank-col selected">
+            <h4>ลำดับความสำคัญ</h4>
+            <div class="selected-list empty" data-rank-sel="C2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- C3 Single -->
+      <div class="q">
+        <div class="q-title">C3. ระยะเวลาที่ท่านคาดว่าจะเริ่มนำ AI มาใช้ <span class="q-hint">(เลือก 1 ข้อ)</span></div>
+        <div data-single="C3">
+          <label class="opt"><input type="radio" name="C3" value="≤3 เดือน"><span class="opt-text">ภายใน 3 เดือน (เร่งด่วน)</span></label>
+          <label class="opt"><input type="radio" name="C3" value="3-6 เดือน"><span class="opt-text">ภายใน 3-6 เดือน</span></label>
+          <label class="opt"><input type="radio" name="C3" value="6-12 เดือน"><span class="opt-text">ภายใน 6-12 เดือน</span></label>
+          <label class="opt"><input type="radio" name="C3" value=">1 ปี"><span class="opt-text">มากกว่า 1 ปี / ยังอยู่ในช่วงศึกษา</span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== ส่วน D ========== -->
+    <div class="card">
+      <span class="section-label">ส่วน D</span>
+      <h2>Pain Point และฟีเจอร์ AI ที่สนใจ</h2>
+
+      <!-- D1 Ranked -->
+      <div class="q">
+        <div class="q-title">D1. ปัญหาที่พบบ่อยในองค์กร <span class="required">*</span></div>
+        <div class="q-hint">ติ๊กทุกข้อที่ใช่ แล้วจัดอันดับความหนักหน่วง 1 → 2 → 3 →</div>
+        <div class="rank-wrap">
+          <div class="rank-col">
+            <h4>ปัญหาที่อาจพบ</h4>
+            <div class="avail-list" data-rank-avail="D1">
+              <label class="opt"><input type="checkbox" data-val="เสียเวลาเอกสาร"><span class="opt-text">พนักงานเสียเวลากับงานเอกสาร / งานกรอกข้อมูลซ้ำๆ</span></label>
+              <label class="opt"><input type="checkbox" data-val="ข้อมูลกระจาย"><span class="opt-text">ข้อมูลกระจายอยู่หลายระบบ / หลายไฟล์ ค้นหาลำบาก</span></label>
+              <label class="opt"><input type="checkbox" data-val="คำถามซ้ำลูกค้า"><span class="opt-text">ลูกค้าถามคำถามเดิมๆ ซ้ำๆ ต้องใช้คนตอบตลอด</span></label>
+              <label class="opt"><input type="checkbox" data-val="ประสานงานช้า"><span class="opt-text">ประสานงานระหว่างแผนกช้า ข้อมูลไม่เชื่อมกัน</span></label>
+              <label class="opt"><input type="checkbox" data-val="รอรายงาน"><span class="opt-text">การตัดสินใจต้องรอรายงาน / ไม่มีข้อมูล Real-time</span></label>
+              <label class="opt"><input type="checkbox" data-val="คีย์ผิด"><span class="opt-text">คีย์ข้อมูลผิดพลาดบ่อย ต้องแก้ไขย้อนหลัง</span></label>
+              <label class="opt"><input type="checkbox" data-val="ติดตามงานยาก"><span class="opt-text">ติดตามงาน / เอกสารค้างยาก ไม่มีระบบเตือนอัตโนมัติ</span></label>
+              <label class="opt"><input type="checkbox" data-val="ขาดทักษะ"><span class="opt-text">ขาดแคลนบุคลากรที่มีทักษะเฉพาะ</span></label>
+              <label class="opt"><input type="checkbox" data-val="วิเคราะห์ลูกค้าไม่ลึก"><span class="opt-text">ไม่สามารถวิเคราะห์ข้อมูลลูกค้า / พฤติกรรมได้เชิงลึก</span></label>
+              <label class="opt"><input type="checkbox" data-val="กังวลความปลอดภัย"><span class="opt-text">กังวลเรื่องความปลอดภัยของข้อมูลเมื่อใช้ AI</span></label>
+              <label class="opt opt-other"><input type="checkbox" data-val="__other__"><span class="opt-text">อื่นๆ (โปรดระบุ)</span></label>
+              <input type="text" class="opt-other-input" placeholder="ระบุปัญหา..." style="display:none">
+            </div>
+          </div>
+          <div class="rank-col selected">
+            <h4>ลำดับความหนักหน่วง</h4>
+            <div class="selected-list empty" data-rank-sel="D1"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- D2: Top 3 Pain Point + 1 "น่าจะมีวิธีที่ดีกว่านี้" -->
+      <div class="q">
+        <div class="q-title">D2. Pain Point สำคัญ 3 อันดับแรก + งานที่คิดว่า "น่าจะมีวิธีที่ดีกว่านี้" <span class="required">*</span></div>
+        <div class="q-hint">ระบุบริบทและรายละเอียดอย่างชัดเจน — เรื่องนี้คือกุญแจที่ทำให้เราออกแบบ Solution ที่ตรงความต้องการของท่านจริงๆ</div>
+        <div class="d2-grid">
+          <div class="d2-box">
+            <div class="d2-label"><span class="rank-num">1</span>Pain Point อันดับ 1</div>
+            <div class="d2-sub">อธิบายปัญหา + บริบท + ใครได้รับผลกระทบ + เสียเวลา/เงินเท่าไหร่</div>
+            <textarea name="D2_1" placeholder="เช่น ทีมบัญชีใช้เวลา 3 วันต่อเดือนในการปิดงบ เพราะต้องกระทบยอดจากหลายระบบด้วยมือ..."></textarea>
+          </div>
+          <div class="d2-box">
+            <div class="d2-label"><span class="rank-num">2</span>Pain Point อันดับ 2</div>
+            <textarea name="D2_2" placeholder="อธิบาย Pain Point อันดับที่ 2..."></textarea>
+          </div>
+          <div class="d2-box">
+            <div class="d2-label"><span class="rank-num">3</span>Pain Point อันดับ 3</div>
+            <textarea name="D2_3" placeholder="อธิบาย Pain Point อันดับที่ 3..."></textarea>
+          </div>
+          <div class="d2-box alt">
+            <div class="d2-label"><span class="rank-num">4</span>งานที่ท่านรู้สึกว่า "น่าจะมีวิธีที่ดีกว่านี้"</div>
+            <div class="d2-sub">งานที่ยังไม่ได้ระบุเป็น Pain Point ชัดเจน แต่ท่านเชื่อว่าน่าจะมีวิธีทำที่ดีกว่า</div>
+            <textarea name="D2_4" placeholder="เช่น การอัปเดตรายงานผู้บริหารรายสัปดาห์ — ใช้เวลาเตรียมมากแต่ Insight ที่ได้น้อย..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- D3: 8 dimensions accordion -->
+      <div class="q">
+        <div class="q-title">D3. ฟีเจอร์ AI ที่สนใจ</div>
+        <div class="q-hint">เลือกได้หลายข้อ ไม่ต้องเรียงลำดับ — คลิกแต่ละด้านเพื่อขยาย</div>
+        <div id="d3-container">
+
+          <!-- ด้านที่ 1: เอกสารและการจัดการความรู้ -->
+          <div class="d3-group">
+            <div class="d3-header">
+              <span>📄 ด้านที่ 1: เอกสารและการจัดการความรู้</span>
+              <span class="d3-count" data-d3-count="1"></span>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="d3-body" data-d3="1">
+              <label class="opt"><input type="checkbox" value="doc-1"><span class="opt-text">AI ช่วยสรุปและจัดระเบียบเอกสารจำนวนมาก (PDF, Word, YouTube, เว็บไซต์) <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F001, F025, F069]</small></span></label>
+              <label class="opt"><input type="checkbox" value="doc-2"><span class="opt-text">AI ค้นหาเอกสารในองค์กรด้วยภาษาธรรมชาติ อ้างอิงแหล่งที่มาได้ <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F001, F069, F146]</small></span></label>
+              <label class="opt"><input type="checkbox" value="doc-3"><span class="opt-text">AI จัดระเบียบและแยกหมวดหมู่ไฟล์อัตโนมัติ <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F059, F062, F117]</small></span></label>
+              <label class="opt"><input type="checkbox" value="doc-4"><span class="opt-text">AI แปลงวิดีโอ/การประชุมให้เป็นสไลด์หรือรายงานข้อความ <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F010, F071]</small></span></label>
+              <label class="opt opt-other"><input type="checkbox" value="__other__"><span class="opt-text">อื่นๆ (โปรดระบุ)</span></label>
+              <input type="text" class="opt-other-input" placeholder="ระบุ..." style="display:none">
+            </div>
+          </div>
+
+          <!-- ด้านที่ 2: การขายและการตลาดดิจิทัล -->
+          <div class="d3-group">
+            <div class="d3-header">
+              <span>📢 ด้านที่ 2: การขายและการตลาดดิจิทัล</span>
+              <span class="d3-count" data-d3-count="2"></span>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="d3-body" data-d3="2">
+              <label class="opt"><input type="checkbox" value="mkt-1"><span class="opt-text">AI วิเคราะห์ประสิทธิภาพโฆษณา (Facebook, Google, TikTok) สรุปเป็นภาษาไทย <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F032, F037]</small></span></label>
+              <label class="opt"><input type="checkbox" value="mkt-2"><span class="opt-text">AI ค้นหาเทรนด์ตลาดและ Keyword ด้วยภาษาธรรมชาติ <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F004, F041]</small></span></label>
+              <label class="opt"><input type="checkbox" value="mkt-3"><span class="opt-text">AI วิเคราะห์คู่แข่งและดึงข้อมูลจาก Social Media อัตโนมัติ <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F053]</small></span></label>
+              <label class="opt"><input type="checkbox" value="mkt-4"><span class="opt-text">AI ช่วยสร้างภาพโฆษณา แบนเนอร์ และคอนเทนต์การตลาด <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F050, F051]</small></span></label>
+              <label class="opt"><input type="checkbox" value="mkt-5"><span class="opt-text">AI ผลิตวิดีโอขายสินค้าแบบ End-to-End <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F008, F049]</small></span></label>
+              <label class="opt opt-other"><input type="checkbox" value="__other__"><span class="opt-text">อื่นๆ (โปรดระบุ)</span></label>
+              <input type="text" class="opt-other-input" placeholder="ระบุ..." style="display:none">
+            </div>
+          </div>
+
+          <!-- ด้านที่ 3: การบริการลูกค้าและการสื่อสาร -->
+          <div class="d3-group">
+            <div class="d3-header">
+              <span>💬 ด้านที่ 3: การบริการลูกค้าและการสื่อสาร</span>
+              <span class="d3-count" data-d3-count="3"></span>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="d3-body" data-d3="3">
+              <label class="opt"><input type="checkbox" value="cs-1"><span class="opt-text">AI ช่วยตอบข้อความลูกค้าบน Facebook/LINE อัตโนมัติ <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F018, F058]</small></span></label>
+              <label class="opt"><input type="checkbox" value="cs-2"><span class="opt-text">AI ผู้ช่วยเฉพาะทางตอบคำถามตามบุคลิกและกฎขององค์กร <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F029, F048]</small></span></label>
+              <label class="opt"><input type="checkbox" value="cs-3"><span class="opt-text">AI แปลและสร้างซับไตเติ้ลหลายภาษาแบบ Real-time <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F028]</small></span></label>
+              <label class="opt"><input type="checkbox" value="cs-4"><span class="opt-text">AI แชทบอทที่ทำงานได้ทั้งตอบคำถามและดำเนินการ (Agent AI) <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F058]</small></span></label>
+              <label class="opt opt-other"><input type="checkbox" value="__other__"><span class="opt-text">อื่นๆ (โปรดระบุ)</span></label>
+              <input type="text" class="opt-other-input" placeholder="ระบุ..." style="display:none">
+            </div>
+          </div>
+
+          <!-- ด้านที่ 4: ปฏิบัติการและความปลอดภัย (Computer Vision & Safety) -->
+          <div class="d3-group">
+            <div class="d3-header">
+              <span>🏭 ด้านที่ 4: ปฏิบัติการ ควบคุมคุณภาพ และความปลอดภัย</span>
+              <span class="d3-count" data-d3-count="4"></span>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="d3-body" data-d3="4">
+              <label class="opt"><input type="checkbox" value="ops-1"><span class="opt-text">AI ตรวจจับและติดตามวัตถุในวิดีโอ/CCTV แบบ Real-time <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F052]</small></span></label>
+              <label class="opt"><input type="checkbox" value="ops-qc"><span class="opt-text">AI ตรวจสอบคุณภาพสินค้า/ชิ้นงานจากภาพ (Visual Quality Control) <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F052]</small></span></label>
+              <label class="opt"><input type="checkbox" value="ops-2"><span class="opt-text">AI แยกแยะและแปลงวัตถุเป็นโมเดล 3 มิติจากภาพ <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F052]</small></span></label>
+              <label class="opt"><input type="checkbox" value="ops-3"><span class="opt-text">ระบบความปลอดภัยอัตโนมัติจาก Computer Vision สำหรับโรงงาน/สถานที่ <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F052]</small></span></label>
+              <label class="opt"><input type="checkbox" value="ops-4"><span class="opt-text">ระบบ Cybersecurity Automation ตรวจจับช่องโหว่และป้องกันภัยคุกคาม <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F076]</small></span></label>
+              <label class="opt opt-other"><input type="checkbox" value="__other__"><span class="opt-text">อื่นๆ (โปรดระบุ)</span></label>
+              <input type="text" class="opt-other-input" placeholder="ระบุ..." style="display:none">
+            </div>
+          </div>
+
+          <!-- ด้านที่ 5: บัญชี การเงิน และการลงทุน -->
+          <div class="d3-group">
+            <div class="d3-header">
+              <span>💰 ด้านที่ 5: บัญชี การเงิน และการลงทุน</span>
+              <span class="d3-count" data-d3-count="5"></span>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="d3-body" data-d3="5">
+              <label class="opt"><input type="checkbox" value="fin-1"><span class="opt-text">AI ช่วยบันทึกบัญชี แนะนำการลงรายการ และดู Cash Flow Real-time <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F027]</small></span></label>
+              <label class="opt"><input type="checkbox" value="fin-2"><span class="opt-text">AI สร้าง Financial Models และวิเคราะห์งบการเงินใน Excel (งบเฉพาะ) <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F022, F034, F130]</small></span></label>
+              <label class="opt"><input type="checkbox" value="fin-3"><span class="opt-text">AI วิเคราะห์พอร์ตการลงทุนและสร้าง Dashboard เฉพาะการเงิน (หุ้น/ลงทุน) <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F042, F091]</small></span></label>
+              <label class="opt"><input type="checkbox" value="fin-4"><span class="opt-text">AI สรุปงบการเงิน P&amp;L จาก Excel/CSV รายเดือน/รายไตรมาส <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F066]</small></span></label>
+              <label class="opt opt-other"><input type="checkbox" value="__other__"><span class="opt-text">อื่นๆ (โปรดระบุ)</span></label>
+              <input type="text" class="opt-other-input" placeholder="ระบุ..." style="display:none">
+            </div>
+          </div>
+
+          <!-- ด้านที่ 6: Automation และ AI Agent (แรงงานดิจิทัล) -->
+          <div class="d3-group">
+            <div class="d3-header">
+              <span>🤖 ด้านที่ 6: Automation และ AI Agent (แรงงานดิจิทัล)</span>
+              <span class="d3-count" data-d3-count="6"></span>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="d3-body" data-d3="6">
+              <label class="opt"><input type="checkbox" value="auto-1"><span class="opt-text">AI Agent ควบคุมเบราว์เซอร์ทำงานอัตโนมัติ (กรอกฟอร์ม คลิก ดึงข้อมูล) <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F017, F018]</small></span></label>
+              <label class="opt"><input type="checkbox" value="auto-2"><span class="opt-text">AI Agent ควบคุมคอมพิวเตอร์ เปิดโปรแกรมและทำงานแทนมนุษย์ <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F020, F057, F064]</small></span></label>
+              <label class="opt"><input type="checkbox" value="auto-4"><span class="opt-text">AI Agent End-to-End ทำงานหลายขั้นตอนในกระบวนการเดียว <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F054, F153]</small></span></label>
+              <label class="opt"><input type="checkbox" value="auto-5"><span class="opt-text">AI เชื่อมต่อระบบภายในองค์กร (Database, Google Sheet, n8n) สร้าง Workflow <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F021, F035]</small></span></label>
+              <label class="opt opt-other"><input type="checkbox" value="__other__"><span class="opt-text">อื่นๆ (โปรดระบุ)</span></label>
+              <input type="text" class="opt-other-input" placeholder="ระบุ..." style="display:none">
+            </div>
+          </div>
+
+          <!-- ด้านที่ 7: วิเคราะห์ข้อมูลและตัดสินใจ (Data Analysis & BI) -->
+          <div class="d3-group">
+            <div class="d3-header">
+              <span>📊 ด้านที่ 7: วิเคราะห์ข้อมูลและตัดสินใจ (Data Analysis & BI)</span>
+              <span class="d3-count" data-d3-count="7"></span>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="d3-body" data-d3="7">
+              <label class="opt"><input type="checkbox" value="data-1"><span class="opt-text">AI ทำ Deep Research ค้นคว้าข้อมูลเชิงลึกจากหลายเว็บไซต์ <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F074, F082]</small></span></label>
+              <label class="opt"><input type="checkbox" value="data-2"><span class="opt-text">AI แปลงข้อมูลไม่มีโครงสร้าง (PDF, เว็บ) เป็นข้อมูลตาราง <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F020]</small></span></label>
+              <label class="opt"><input type="checkbox" value="data-3"><span class="opt-text">AI วิเคราะห์ข้อมูลธุรกิจใน Spreadsheet ด้วยภาษาธรรมชาติ (ยอดขาย/สต๊อก/HR — ไม่ใช่งบการเงิน) <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F038]</small></span></label>
+              <label class="opt"><input type="checkbox" value="data-4"><span class="opt-text">AI สร้าง Dashboard และ Visualization จากข้อมูลธุรกิจ (ยอดขาย/ลูกค้า/KPI) <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F114, F124, F138]</small></span></label>
+              <label class="opt"><input type="checkbox" value="data-5"><span class="opt-text">AI Citation Mapping และวิเคราะห์งานวิจัย <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F023]</small></span></label>
+              <label class="opt opt-other"><input type="checkbox" value="__other__"><span class="opt-text">อื่นๆ (โปรดระบุ)</span></label>
+              <input type="text" class="opt-other-input" placeholder="ระบุ..." style="display:none">
+            </div>
+          </div>
+
+          <!-- ด้านที่ 8: AI เลขาผู้บริหารและการบริหารเวลา -->
+          <div class="d3-group">
+            <div class="d3-header">
+              <span>🗓️ ด้านที่ 8: AI เลขาผู้บริหารและการบริหารเวลา</span>
+              <span class="d3-count" data-d3-count="8"></span>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="d3-body" data-d3="8">
+              <label class="opt"><input type="checkbox" value="sec-1"><span class="opt-text">AI ดึงข้อมูลจาก Email/Calendar/Drive ตอบคำถามข้ามแอป <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F033, F036, F094]</small></span></label>
+              <label class="opt"><input type="checkbox" value="sec-2"><span class="opt-text">AI เลขาจัดตารางนัด สรุปประชุม และเตรียมเอกสารประชุม <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F060]</small></span></label>
+              <label class="opt"><input type="checkbox" value="sec-3"><span class="opt-text">AI ตั้งเวลาส่งรายงาน/Daily Briefing/เตือนงานค้างอัตโนมัติ (Scheduled Automation) <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F019, F045, F047, F072, F104]</small></span></label>
+              <label class="opt"><input type="checkbox" value="sec-4"><span class="opt-text">AI ช่วยงานผู้บริหาร: ร่างอีเมล นัดประชุม จัดการไฟล์ในครั้งเดียว <small style="color:#8899aa; font-weight:400; font-size:0.82em;">[F066, F095]</small></span></label>
+              <label class="opt opt-other"><input type="checkbox" value="__other__"><span class="opt-text">อื่นๆ (โปรดระบุ)</span></label>
+              <input type="text" class="opt-other-input" placeholder="ระบุ..." style="display:none">
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-area">
+      <button type="button" class="btn-submit" onclick="submitSurvey()">🙏 ส่งแบบสอบถาม</button>
+      <p style="color:var(--muted); font-size:0.85rem; margin-top:12px;">
+        ทีมงานจะวิเคราะห์คำตอบและเตรียมข้อเสนอที่ตรงความต้องการก่อนนัดพบ
+      </p>
+    </div>
+  </form>
+
+  <div id="result">
+    <h3>✅ ข้อมูลคำตอบของท่าน (JSON)</h3>
+    <p style="color:var(--muted); font-size:0.88rem; margin-bottom:10px;">
+      ผู้ดูแลระบบ: Copy JSON ข้างล่างส่งกลับทีม One7 AI (หรือระบบจะบันทึกอัตโนมัติ)
+    </p>
+    <textarea id="result-json" readonly rows="12"></textarea>
+    <button type="button" class="copy-btn" onclick="copyResult()">📋 Copy JSON</button>
+  </div>
+
+  <footer>
+    <strong>One7 AI</strong> — AI Solutions for Enterprise <br>
+    <span style="font-size:0.78rem;">Reference Template v2.0 · สำหรับเปรียบเทียบคุณภาพ HTML ที่ AI Generate จาก Master Prompt</span>
+  </footer>
+</div>
+
+<script>
+// ===== 1. Checkbox / radio highlight =====
+document.querySelectorAll('.opt input').forEach(inp => {
+  inp.addEventListener('change', e => {
+    const lbl = e.target.closest('.opt');
+    if (inp.type === 'radio') {
+      document.querySelectorAll(`[name="${inp.name}"]`).forEach(r => r.closest('.opt').classList.remove('checked'));
+      if (inp.checked) lbl.classList.add('checked');
+    } else {
+      lbl.classList.toggle('checked', inp.checked);
+    }
+
+    // "Other" text input toggle
+    if (lbl.classList.contains('opt-other')) {
+      const container = lbl.parentElement;
+      const otherInput = container.querySelector('.opt-other-input');
+      if (otherInput) otherInput.style.display = inp.checked ? 'block' : 'none';
+    }
+  });
+});
+
+// ===== 2. Ranked multi-select (C1, C2, D1) =====
+document.querySelectorAll('[data-rank-avail]').forEach(avail => {
+  const key = avail.dataset.rankAvail;
+  const sel = document.querySelector(`[data-rank-sel="${key}"]`);
+
+  avail.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const val = cb.dataset.val;
+      const text = cb.closest('.opt').querySelector('.opt-text').textContent.trim();
+
+      if (cb.checked) {
+        // Add to selected
+        const item = document.createElement('div');
+        item.className = 'drag-item';
+        item.draggable = true;
+        item.dataset.val = val;
+        item.dataset.text = text;
+        item.innerHTML = `
+          <span class="rank-badge"></span>
+          <span class="drag-handle">⋮⋮</span>
+          <span style="flex:1">${text}</span>
+          <button type="button" class="remove-btn" title="ลบ">✕</button>
+        `;
+        sel.appendChild(item);
+        sel.classList.remove('empty');
+        attachDrag(item, sel);
+        item.querySelector('.remove-btn').addEventListener('click', () => {
+          cb.checked = false;
+          cb.dispatchEvent(new Event('change'));
+        });
+      } else {
+        // Remove from selected
+        const existing = sel.querySelector(`.drag-item[data-val="${CSS.escape(val)}"]`);
+        if (existing) existing.remove();
+        if (!sel.children.length) sel.classList.add('empty');
+      }
+      renumber(sel);
+    });
+  });
+});
+
+function renumber(sel) {
+  [...sel.querySelectorAll('.drag-item')].forEach((it, i) => {
+    it.querySelector('.rank-badge').textContent = i + 1;
+  });
+}
+
+// ===== 3. Drag and drop (desktop + touch) =====
+function attachDrag(item, container) {
+  // Desktop drag
+  item.addEventListener('dragstart', e => {
+    item.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+  });
+  item.addEventListener('dragend', () => {
+    item.classList.remove('dragging');
+    document.querySelectorAll('.drop-target').forEach(d => d.classList.remove('drop-target'));
+    renumber(container);
+  });
+
+  // Touch drag (mobile)
+  let touchStartY = 0;
+  let draggingEl = null;
+  item.addEventListener('touchstart', e => {
+    if (!e.target.closest('.drag-handle') && !e.target.closest('.drag-item')) return;
+    if (e.target.closest('.remove-btn')) return;
+    draggingEl = item;
+    touchStartY = e.touches[0].clientY;
+    item.classList.add('dragging');
+  }, { passive: true });
+  item.addEventListener('touchmove', e => {
+    if (!draggingEl) return;
+    e.preventDefault();
+    const y = e.touches[0].clientY;
+    const siblings = [...container.querySelectorAll('.drag-item:not(.dragging)')];
+    const after = siblings.find(sib => {
+      const rect = sib.getBoundingClientRect();
+      return y < rect.top + rect.height / 2;
+    });
+    if (after) container.insertBefore(draggingEl, after);
+    else container.appendChild(draggingEl);
+  }, { passive: false });
+  item.addEventListener('touchend', () => {
+    if (draggingEl) draggingEl.classList.remove('dragging');
+    draggingEl = null;
+    renumber(container);
+  });
+}
+
+// Container-level dragover (desktop)
+document.querySelectorAll('.selected-list').forEach(container => {
+  container.addEventListener('dragover', e => {
+    e.preventDefault();
+    const dragging = document.querySelector('.dragging');
+    if (!dragging || !container.contains(dragging)) return;
+    const siblings = [...container.querySelectorAll('.drag-item:not(.dragging)')];
+    const after = siblings.find(sib => {
+      const rect = sib.getBoundingClientRect();
+      return e.clientY < rect.top + rect.height / 2;
+    });
+    if (after) container.insertBefore(dragging, after);
+    else container.appendChild(dragging);
+  });
+});
+
+// ===== 4. D3 Accordion =====
+document.querySelectorAll('.d3-header').forEach(h => {
+  h.addEventListener('click', () => {
+    h.closest('.d3-group').classList.toggle('open');
+  });
+});
+
+// Count checked per D3 dimension
+document.querySelectorAll('[data-d3]').forEach(body => {
+  const num = body.dataset.d3;
+  const counter = document.querySelector(`[data-d3-count="${num}"]`);
+  body.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const count = body.querySelectorAll('input[type="checkbox"]:checked').length;
+      counter.textContent = count > 0 ? `✓ ${count} ข้อ` : '';
+    });
+  });
+});
+
+// ===== 5. Submit =====
+function submitSurvey() {
+  const data = {
+    timestamp: new Date().toISOString(),
+    A: gatherSection(),
+    B: gatherSection('B'),
+    C: gatherSection('C'),
+    D: gatherSection('D')
+  };
+
+  // A
+  data.A = {
+    A1: document.querySelector('[name="A1"]').value,
+    A2: document.querySelector('[name="A2"]').value,
+    A3: document.querySelector('[name="A3"]').value,
+    A4: gatherMulti('A4')
+  };
+  // B
+  data.B = {
+    B1: gatherSingle('B1'),
+    B2: gatherMulti('B2')
+  };
+  // C
+  data.C = {
+    C1_ranked: gatherRanked('C1'),
+    C2_ranked: gatherRanked('C2'),
+    C3: gatherSingle('C3')
+  };
+  // D
+  data.D = {
+    D1_ranked: gatherRanked('D1'),
+    D2: {
+      rank1: document.querySelector('[name="D2_1"]').value,
+      rank2: document.querySelector('[name="D2_2"]').value,
+      rank3: document.querySelector('[name="D2_3"]').value,
+      better_way: document.querySelector('[name="D2_4"]').value
+    },
+    D3_by_dimension: gatherD3()
+  };
+
+  document.getElementById('result-json').value = JSON.stringify(data, null, 2);
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+}
+
+function gatherSection() { return {}; }
+
+function gatherMulti(key) {
+  const block = document.querySelector(`[data-multi="${key}"]`);
+  if (!block) return [];
+  const vals = [...block.querySelectorAll('input:checked')].map(i => i.value);
+  const otherIdx = vals.indexOf('__other__');
+  if (otherIdx !== -1) {
+    const other = block.querySelector('.opt-other-input')?.value || '';
+    vals[otherIdx] = `อื่นๆ: ${other}`;
+  }
+  return vals;
+}
+
+function gatherSingle(key) {
+  const block = document.querySelector(`[data-single="${key}"]`);
+  if (!block) return null;
+  const checked = block.querySelector('input:checked');
+  if (!checked) return null;
+  if (checked.value === '__other__') {
+    const other = block.querySelector('.opt-other-input')?.value || '';
+    return `อื่นๆ: ${other}`;
+  }
+  return checked.value;
+}
+
+function gatherRanked(key) {
+  const sel = document.querySelector(`[data-rank-sel="${key}"]`);
+  if (!sel) return [];
+  const items = [...sel.querySelectorAll('.drag-item')].map((it, idx) => ({
+    rank: idx + 1,
+    value: it.dataset.val,
+    label: it.dataset.text
+  }));
+  // Append other text if selected
+  const avail = document.querySelector(`[data-rank-avail="${key}"]`);
+  const otherCb = avail?.querySelector('.opt-other input');
+  if (otherCb?.checked) {
+    const other = avail.querySelector('.opt-other-input')?.value || '';
+    const entry = items.find(i => i.value === '__other__');
+    if (entry) entry.label = `อื่นๆ: ${other}`;
+  }
+  return items;
+}
+
+function gatherD3() {
+  const result = {};
+  const titles = {
+    1: 'เลขาผู้บริหารและบริหารเวลา',
+    2: 'เอกสารและการจัดการความรู้',
+    3: 'การขายและการตลาด',
+    4: 'การบริการลูกค้า',
+    5: 'ปฏิบัติการและควบคุมคุณภาพ',
+    6: 'บัญชี การเงิน และป้องกันทุจริต',
+    7: 'ทรัพยากรบุคคลและองค์ความรู้ภายใน',
+    8: 'วิเคราะห์ข้อมูลและตัดสินใจ'
+  };
+  for (let i = 1; i <= 8; i++) {
+    const body = document.querySelector(`[data-d3="${i}"]`);
+    if (!body) continue;
+    const vals = [...body.querySelectorAll('input:checked')].map(cb => cb.value);
+    const otherIdx = vals.indexOf('__other__');
+    if (otherIdx !== -1) {
+      const other = body.querySelector('.opt-other-input')?.value || '';
+      vals[otherIdx] = `อื่นๆ: ${other}`;
+    }
+    if (vals.length) result[`d${i}_${titles[i]}`] = vals;
+  }
+  return result;
+}
+
+function copyResult() {
+  const ta = document.getElementById('result-json');
+  ta.select();
+  document.execCommand('copy');
+  const btn = document.querySelector('.copy-btn');
+  const orig = btn.textContent;
+  btn.textContent = '✓ Copied!';
+  setTimeout(() => btn.textContent = orig, 1500);
+}
+</script>
+</body>
+</html>
